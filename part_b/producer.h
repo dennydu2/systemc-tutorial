@@ -14,9 +14,9 @@ public:
     explicit Producer(sc_core::sc_module_name name);
 
 private:
-    static constexpr int kWidth = 780;
-    static constexpr int kHeight = 610;
-    static constexpr int kBytesPerPixel = 4;
+    static const int WIDTH = 780;
+    static const int HEIGHT = 610;
+    static const int BYTES = 4;
 
     void generate_frame();
 };

@@ -19,11 +19,11 @@ public:
     void save_image(const std::string& filename) const;
 
 private:
-    static constexpr int kWidth = 780;
-    static constexpr int kHeight = 610;
-    static constexpr int kBytesPerPixel = 4;
+    static const int WIDTH = 780;
+    static const int HEIGHT = 610;
+    static const int BYTES = 4;
 
-    std::vector<std::uint32_t> frame_buffer_;
+    std::vector<std::uint32_t> mem;
 
     void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay);
 };
