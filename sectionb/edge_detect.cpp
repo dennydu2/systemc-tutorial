@@ -1,12 +1,13 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
     std::string input = "input.mp4";
-    std::string output = "edges.mp4";
+    std::string output = "objects.mp4";
     if (argc > 1) {
         input = argv[1];
     }
@@ -18,7 +19,12 @@ int main(int argc, char* argv[]) {
     if (input == "0") {
         cap.open(0);
     } else {
-        cap.open(input);
+        // Try default backend first.
+        cap.open(input, cv::CAP_ANY);
+        if (!cap.isOpened()) {
+            // Fallback for some Linux systems where ffmpeg works better.
+            cap.open(input, cv::CAP_FFMPEG);
+        }
     }
 
     if (!cap.isOpened()) {
@@ -49,24 +55,49 @@ int main(int argc, char* argv[]) {
     const char* d = std::getenv("DISPLAY");
     bool show = (d && d[0] != '\0');
 
+    // Standard OpenCV background subtraction for multi-object blobs.
+    cv::Ptr<cv::BackgroundSubtractor> bg = cv::createBackgroundSubtractorMOG2(200, 25.0, true);
+
     cv::Mat frame;
-    cv::Mat g;
-    cv::Mat b;
-    cv::Mat e;
-    cv::Mat e_bgr;
+    cv::Mat fgmask;
+    cv::Mat clean;
+    std::vector<std::vector<cv::Point> > contours;
     long long count = 0;
 
     while (cap.read(frame)) {
-        cv::cvtColor(frame, g, cv::COLOR_BGR2GRAY);
-        cv::GaussianBlur(g, b, cv::Size(5, 5), 1.5);
-        cv::Canny(b, e, 50, 150);
-        cv::cvtColor(e, e_bgr, cv::COLOR_GRAY2BGR);
+        bg->apply(frame, fgmask);
 
-        writer.write(e_bgr);
+        cv::threshold(fgmask, fgmask, 200, 255, cv::THRESH_BINARY);
+        cv::morphologyEx(fgmask, clean, cv::MORPH_OPEN, cv::Mat(), cv::Point(-1, -1), 1);
+        cv::morphologyEx(clean, clean, cv::MORPH_DILATE, cv::Mat(), cv::Point(-1, -1), 2);
+
+        contours.clear();
+        cv::findContours(clean, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+        int obj_id = 1;
+        for (size_t i = 0; i < contours.size(); ++i) {
+            double area = cv::contourArea(contours[i]);
+            if (area < 600.0) {
+                continue;
+            }
+
+            cv::Rect box = cv::boundingRect(contours[i]);
+            cv::rectangle(frame, box, cv::Scalar(0, 255, 0), 2);
+            cv::putText(frame,
+                "obj_" + std::to_string(obj_id),
+                cv::Point(box.x, box.y - 6),
+                cv::FONT_HERSHEY_SIMPLEX,
+                0.6,
+                cv::Scalar(0, 255, 0),
+                2);
+            obj_id++;
+        }
+
+        writer.write(frame);
         count++;
 
         if (show) {
-            cv::imshow("edges_video", e);
+            cv::imshow("object_detection", frame);
             int key = cv::waitKey(1);
             if (key == 27 || key == 'q') {
                 break;
