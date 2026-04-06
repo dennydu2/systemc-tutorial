@@ -22,13 +22,13 @@ int sc_main(int argc, char* argv[]) {
     long long pixels = static_cast<long long>(w) * h;
     long long expected_ns = pixels * (10 + 50);
 
-    std::cout << "start sim\n";
-    std::cout << "expected time = " << expected_ns << " ns ("
-              << (expected_ns / 1000000.0) << " ms)\n";
+    std::cout << "simulation start time: 0 ns\n";
+    std::cout << "calculated end time: " << expected_ns << " ns\n";
 
     sc_core::sc_start();
 
-    std::cout << "done at " << sc_core::sc_time_stamp() << "\n";
+    std::cout << "simulation end time (actual): "
+              << sc_core::sc_time_stamp().to_string() << "\n";
 
     consumer.save_image("output_frame.ppm");
     return 0;

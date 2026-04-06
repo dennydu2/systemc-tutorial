@@ -6,7 +6,6 @@ Router::Router(sc_core::sc_module_name name)
 }
 
 void Router::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay) {
-    // 10ns router delay from assignment
     delay += sc_core::sc_time(10, sc_core::SC_NS);
 
     sc_dt::uint64 addr = trans.get_address();
@@ -15,7 +14,6 @@ void Router::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& dela
         return;
     }
 
-    // map to local memory offset then forward
     trans.set_address(addr - MEM_START);
     initiator_socket->b_transport(trans, delay);
 }

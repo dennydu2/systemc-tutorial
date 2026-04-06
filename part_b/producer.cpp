@@ -13,7 +13,6 @@ void Producer::generate_frame() {
 
     for (int y = 0; y < HEIGHT; ++y) {
         for (int x = 0; x < WIDTH; ++x) {
-            // simple gradient-ish RGB pattern
             std::uint32_t pixel = ((x % 256) << 16) | ((y % 256) << 8) | ((x + y) % 256);
 
             tx.set_command(tlm::TLM_WRITE_COMMAND);

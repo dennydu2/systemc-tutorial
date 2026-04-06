@@ -6,20 +6,15 @@
 int main(int argc, char* argv[]) {
     std::string input = "input.jpg";
     std::string output = "edges.jpg";
-
     if (argc > 1) {
-        input = argv[1];
-    }
+        input = argv[1];}
     if (argc > 2) {
-        output = argv[2];
-    }
-
+        output = argv[2];}
     cv::Mat img = cv::imread(input, cv::IMREAD_COLOR);
     if (img.empty()) {
-        std::cout << "bad input image\n";
+        std::cout << "no input image\n";
         return 1;
     }
-
     cv::Mat g;
     cv::Mat b;
     cv::Mat e;
@@ -28,7 +23,6 @@ int main(int argc, char* argv[]) {
     cv::Canny(b, e, 50, 150);
 
     cv::imwrite(output, e);
-    std::cout << "saved: " << output << "\n";
 
     const char* d = std::getenv("DISPLAY");
     if (d && d[0] != '\0') {
