@@ -22,8 +22,8 @@ int sc_main(int argc, char* argv[]) {
 	Producer p1("producer", input);
 	LineProcessor p2("line_processor", output);
 
-	p1.socket.bind(mem.socket);
-	p2.socket.bind(mem.socket);
+	p1.socket.bind(mem.socket_p1);
+	p2.socket.bind(mem.socket_p2);
 
 	std::cout << "start systemc\n";
 	sc_core::sc_start();

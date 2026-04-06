@@ -9,7 +9,8 @@
 
 class Memory : public sc_core::sc_module {
 public:
-	tlm_utils::simple_target_socket<Memory> socket;
+	tlm_utils::simple_target_socket<Memory> socket_p1;
+	tlm_utils::simple_target_socket<Memory> socket_p2;
 
 	SC_HAS_PROCESS(Memory);
 	Memory(sc_core::sc_module_name name, std::size_t bytes);

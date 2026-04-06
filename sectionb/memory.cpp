@@ -3,8 +3,9 @@
 #include <cstring>
 
 Memory::Memory(sc_core::sc_module_name name, std::size_t bytes)
-	: sc_core::sc_module(name), socket("socket"), mem(bytes, 0) {
-	socket.register_b_transport(this, &Memory::b_transport);
+	: sc_core::sc_module(name), socket_p1("socket_p1"), socket_p2("socket_p2"), mem(bytes, 0) {
+	socket_p1.register_b_transport(this, &Memory::b_transport);
+	socket_p2.register_b_transport(this, &Memory::b_transport);
 }
 
 void Memory::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay) {
