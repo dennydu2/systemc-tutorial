@@ -6,6 +6,7 @@
 
 Consumer::Consumer(sc_core::sc_module_name name)
     : sc_core::sc_module(name), target_socket("target_socket") {
+    // Register target callback and allocate full frame buffer.
     target_socket.register_b_transport(this, &Consumer::b_transport);
     mem.resize(WIDTH * HEIGHT, 0);
 }
@@ -14,11 +15,13 @@ void Consumer::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& de
     sc_dt::uint64 addr = trans.get_address();
     unsigned char* ptr = trans.get_data_ptr();
 
+    // This memory model supports only write transactions.
     if (trans.get_command() != tlm::TLM_WRITE_COMMAND) {
         trans.set_response_status(tlm::TLM_COMMAND_ERROR_RESPONSE);
         return;
     }
 
+    // Validate packet shape for 1 pixel (4 bytes).
     if (trans.get_data_length() != BYTES || ptr == 0) {
         trans.set_response_status(tlm::TLM_BURST_ERROR_RESPONSE);
         return;
@@ -35,6 +38,7 @@ void Consumer::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& de
         return;
     }
 
+    // Write incoming pixel into local memory.
     std::memcpy(&mem[index], ptr, BYTES);
 
     // Part B asks for 50ns at memory side
@@ -43,6 +47,7 @@ void Consumer::b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& de
 }
 
 void Consumer::save_image(const std::string& filename) const {
+    // Export the memory buffer as binary PPM image.
     std::ofstream ofs(filename, std::ios::binary);
     ofs << "P6\n" << WIDTH << " " << HEIGHT << "\n255\n";
 
