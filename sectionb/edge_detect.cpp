@@ -88,13 +88,18 @@ int main(int argc, char* argv[]) {
             }
 
             cv::Rect box = cv::boundingRect(contours[i]);
-            cv::rectangle(frame, box, cv::Scalar(0, 255, 0), 2);
+
+            // Turn red if object enters the rightmost 200-pixel zone.
+            bool in_right_zone = (box.x + box.width) >= (w - 200);
+            cv::Scalar color = in_right_zone ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
+
+            cv::rectangle(frame, box, color, 2);
             cv::putText(frame,
                 "obj_" + std::to_string(obj_id),
                 cv::Point(box.x, box.y - 6),
                 cv::FONT_HERSHEY_SIMPLEX,
                 0.6,
-                cv::Scalar(0, 255, 0),
+                color,
                 2);
             obj_id++;
         }
