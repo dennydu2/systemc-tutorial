@@ -35,8 +35,12 @@ int main(int argc, char* argv[]) {
     int w = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
     int h = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     double fps = cap.get(cv::CAP_PROP_FPS);
-    if (fps <= 0.0) {
+    if (fps < 1.0 || fps > 240.0) {
         fps = 30.0;
+    }
+    int wait_ms = (int)(1000.0 / fps);
+    if (wait_ms < 1) {
+        wait_ms = 1;
     }
 
     cv::VideoWriter writer(
@@ -51,6 +55,8 @@ int main(int argc, char* argv[]) {
         std::cout << "cant open output video\n";
         return 1;
     }
+
+    std::cout << "input fps: " << fps << "\n";
 
     const char* d = std::getenv("DISPLAY");
     bool show = (d && d[0] != '\0');
@@ -98,7 +104,7 @@ int main(int argc, char* argv[]) {
 
         if (show) {
             cv::imshow("object_detection", frame);
-            int key = cv::waitKey(1);
+            int key = cv::waitKey(wait_ms);
             if (key == 27 || key == 'q') {
                 break;
             }
