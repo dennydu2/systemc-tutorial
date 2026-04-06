@@ -92,8 +92,9 @@ void LineProcessor::run() {
 	cv::Mat blur_img;
 	cv::Mat edges;
 	cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-	cv::GaussianBlur(gray, blur_img, cv::Size(5, 5), 1.5);
-	cv::Canny(blur_img, edges, 50, 150);
+	// Lighter smoothing + lower thresholds = grainier edge map.
+	cv::GaussianBlur(gray, blur_img, cv::Size(3, 3), 0.5);
+	cv::Canny(blur_img, edges, 15, 60);
 
 	cv::Mat roi_mask = cv::Mat::zeros(edges.size(), edges.type());
 	cv::Point pts[4];
