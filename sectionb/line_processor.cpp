@@ -109,7 +109,9 @@ void LineProcessor::run() {
 	std::vector<cv::Vec4i> lines;
 	cv::HoughLinesP(road_edges, lines, 1, CV_PI / 180, 40, 35, 20);
 
-	cv::Mat out = img.clone();
+	// Build output like the sample: white edges on black, then draw red lines.
+	cv::Mat out;
+	cv::cvtColor(edges, out, cv::COLOR_GRAY2BGR);
 	for (size_t i = 0; i < lines.size(); i++) {
 		cv::Vec4i l = lines[i];
 		double dx = (double)l[2] - (double)l[0];

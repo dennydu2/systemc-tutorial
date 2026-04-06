@@ -25,8 +25,9 @@ int main(int argc, char* argv[]) {
     cv::Mat blur_img;
     cv::Mat edges;
     cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(gray, blur_img, cv::Size(5, 5), 1.5);
-    cv::Canny(blur_img, edges, 50, 150);
+    // Lighter blur + lower thresholds keeps more small/noisy edges (grainier look).
+    cv::GaussianBlur(gray, blur_img, cv::Size(3, 3), 0.6);
+    cv::Canny(blur_img, edges, 20, 80);
 
     cv::imwrite(output, edges);
     std::cout << "saved: " << output << "\n";
