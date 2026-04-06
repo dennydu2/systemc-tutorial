@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include <opencv2/opencv.hpp>
 
 int main(int argc, char* argv[]) {
-    std::string input = "input.mp4";
-    std::string output = "objects.mp4";
+    std::string input = "input.jpg";
+    std::string output = "edges.jpg";
+
     if (argc > 1) {
         input = argv[1];
     }
@@ -15,114 +15,27 @@ int main(int argc, char* argv[]) {
         output = argv[2];
     }
 
-    cv::VideoCapture cap;
-    if (input == "0") {
-        cap.open(0);
-    } else {
-        // Try default backend first.
-        cap.open(input, cv::CAP_ANY);
-        if (!cap.isOpened()) {
-            // Fallback for some Linux systems where ffmpeg works better.
-            cap.open(input, cv::CAP_FFMPEG);
-        }
-    }
-
-    if (!cap.isOpened()) {
-        std::cout << "cant open video input\n";
+    cv::Mat img = cv::imread(input, cv::IMREAD_COLOR);
+    if (img.empty()) {
+        std::cout << "bad input image\n";
         return 1;
     }
 
-    int w = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
-    int h = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-    double fps = cap.get(cv::CAP_PROP_FPS);
-    if (fps < 1.0 || fps > 240.0) {
-        fps = 30.0;
-    }
-    int wait_ms = (int)(1000.0 / fps);
-    if (wait_ms < 1) {
-        wait_ms = 1;
-    }
+    cv::Mat gray;
+    cv::Mat blur_img;
+    cv::Mat edges;
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(gray, blur_img, cv::Size(5, 5), 1.5);
+    cv::Canny(blur_img, edges, 50, 150);
 
-    cv::VideoWriter writer(
-        output,
-        cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
-        fps,
-        cv::Size(w, h),
-        true
-    );
-
-    if (!writer.isOpened()) {
-        std::cout << "cant open output video\n";
-        return 1;
-    }
-
-    std::cout << "input fps: " << fps << "\n";
+    cv::imwrite(output, edges);
+    std::cout << "saved: " << output << "\n";
 
     const char* d = std::getenv("DISPLAY");
-    bool show = (d && d[0] != '\0');
-
-    // Standard OpenCV background subtraction for multi-object blobs.
-    cv::Ptr<cv::BackgroundSubtractor> bg = cv::createBackgroundSubtractorMOG2(200, 25.0, true);
-
-    cv::Mat frame;
-    cv::Mat fgmask;
-    cv::Mat clean;
-    std::vector<std::vector<cv::Point> > contours;
-    long long count = 0;
-
-    while (cap.read(frame)) {
-        bg->apply(frame, fgmask);
-
-        cv::threshold(fgmask, fgmask, 200, 255, cv::THRESH_BINARY);
-        cv::morphologyEx(fgmask, clean, cv::MORPH_OPEN, cv::Mat(), cv::Point(-1, -1), 1);
-        cv::morphologyEx(clean, clean, cv::MORPH_DILATE, cv::Mat(), cv::Point(-1, -1), 2);
-
-        contours.clear();
-        cv::findContours(clean, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-        // Bottom-right trigger zone: 200x200 pixels.
-        cv::Rect trigger_zone(w - 200, h - 200, 200, 200);
-
-        int obj_id = 1;
-        for (size_t i = 0; i < contours.size(); ++i) {
-            double area = cv::contourArea(contours[i]);
-            if (area < 600.0) {
-                continue;
-            }
-
-            cv::Rect box = cv::boundingRect(contours[i]);
-
-            // Turn red only if the box center is inside bottom-right 200x200 zone.
-            cv::Point center(box.x + box.width / 2, box.y + box.height / 2);
-            bool in_trigger = trigger_zone.contains(center);
-            cv::Scalar color = in_trigger ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
-
-            cv::rectangle(frame, box, color, 2);
-            cv::putText(frame,
-                "obj_" + std::to_string(obj_id),
-                cv::Point(box.x, box.y - 6),
-                cv::FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2);
-            obj_id++;
-        }
-
-        // Draw trigger zone for visual reference.
-        cv::rectangle(frame, trigger_zone, cv::Scalar(255, 0, 0), 2);
-
-        writer.write(frame);
-        count++;
-
-        if (show) {
-            cv::imshow("object_detection", frame);
-            int key = cv::waitKey(wait_ms);
-            if (key == 27 || key == 'q') {
-                break;
-            }
-        }
+    if (d && d[0] != '\0') {
+        cv::imshow("edges", edges);
+        cv::waitKey(0);
     }
 
-    std::cout << "done. frames: " << count << " output: " << output << "\n";
     return 0;
 }
