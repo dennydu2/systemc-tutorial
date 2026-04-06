@@ -80,6 +80,9 @@ int main(int argc, char* argv[]) {
         contours.clear();
         cv::findContours(clean, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
+        // Bottom-right trigger zone: 200x200 pixels.
+        cv::Rect trigger_zone(w - 200, h - 200, 200, 200);
+
         int obj_id = 1;
         for (size_t i = 0; i < contours.size(); ++i) {
             double area = cv::contourArea(contours[i]);
@@ -89,9 +92,10 @@ int main(int argc, char* argv[]) {
 
             cv::Rect box = cv::boundingRect(contours[i]);
 
-            // Turn red if object enters the rightmost 200-pixel zone.
-            bool in_right_zone = (box.x + box.width) >= (w - 200);
-            cv::Scalar color = in_right_zone ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
+            // Turn red only if the box center is inside bottom-right 200x200 zone.
+            cv::Point center(box.x + box.width / 2, box.y + box.height / 2);
+            bool in_trigger = trigger_zone.contains(center);
+            cv::Scalar color = in_trigger ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
 
             cv::rectangle(frame, box, color, 2);
             cv::putText(frame,
@@ -103,6 +107,9 @@ int main(int argc, char* argv[]) {
                 2);
             obj_id++;
         }
+
+        // Draw trigger zone for visual reference.
+        cv::rectangle(frame, trigger_zone, cv::Scalar(255, 0, 0), 2);
 
         writer.write(frame);
         count++;
